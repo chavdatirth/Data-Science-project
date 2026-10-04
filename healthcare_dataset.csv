@@ -1,0 +1,6 @@
+Patient Name,Patient ID,Gender,City,Email ID,Blood Group,Marital Status,Age,Height (cm),Weight (kg),Body Temperature (°C),Blood Pressure (mmHg),Heart Rate (BPM),Blood Sugar Level (mg/dL),Cholesterol Level (mg/dL),Number of Previous Visits,Disease Severity,Pain Level,Smoking Status,Treatment Satisfaction
+Rahul,P001,Male,Ahmedabad,rahul@gmail.com,A+,Single,25,170,65,36.6,120/80,72,95,180,2,Low,Low,No,Excellent
+Priya,P002,Female,Surat,priya@gmail.com,B+,Married,34,160,58,37.0,130/85,78,110,210,5,Medium,Medium,No,Good
+Amit,P003,Male,Vadodara,amit@gmail.com,O+,Single,29,175,72,36.8,118/78,70,88,175,1,Low,None,Yes,Excellent
+Neha,P004,Female,Rajkot,neha@gmail.com,AB+,Married,42,162,68,37.2,140/90,85,145,240,8,High,High,Yes,Average
+Tirth,P005,Male,Ahmedabad,tirth@gmail.com,A-,Single,22,178,70,36.5,122/82,75,92,190,3,Low,Low,No,Good
