@@ -1,0 +1,197 @@
+import json
+
+cells = []
+
+cells.append({
+    "cell_type": "markdown", "metadata": {},
+    "source": ["# Indian Housing Price Prediction\n", "### Specialized Model handling BHK, Area, City, and Furnishing"]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import pickle\n",
+        "import warnings\n",
+        "warnings.filterwarnings('ignore')\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.pipeline import Pipeline\n",
+        "from sklearn.compose import ColumnTransformer\n",
+        "from sklearn.impute import SimpleImputer\n",
+        "from sklearn.preprocessing import StandardScaler, OneHotEncoder\n",
+        "from sklearn.linear_model import Ridge\n",
+        "from sklearn.metrics import mean_squared_error, r2_score\n"
+    ]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "train = pd.read_csv('data/indian_train.csv')\n",
+        "test = pd.read_csv('data/indian_test.csv')\n",
+        "print('Train Shape:', train.shape)\n",
+        "print('Test Shape:', test.shape)\n"
+    ]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "X = train.drop(columns=['Property_ID', 'Price_Lakhs'])\n",
+        "y = train['Price_Lakhs']\n",
+        "X_test = test.drop(columns=['Property_ID'])\n",
+        "\n",
+        "numerical_cols = X.select_dtypes(include=[np.number]).columns.tolist()\n",
+        "categorical_cols = X.select_dtypes(exclude=[np.number]).columns.tolist()\n",
+        "\n",
+        "num_pipeline = Pipeline(steps=[\n",
+        "    ('imputer', SimpleImputer(strategy='median')),\n",
+        "    ('scaler', StandardScaler())\n",
+        "])\n",
+        "cat_pipeline = Pipeline(steps=[\n",
+        "    ('imputer', SimpleImputer(strategy='most_frequent')),\n",
+        "    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))\n",
+        "])\n",
+        "preprocessor = ColumnTransformer(transformers=[\n",
+        "    ('num', num_pipeline, numerical_cols),\n",
+        "    ('cat', cat_pipeline, categorical_cols)\n",
+        "])\n"
+    ]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "model_pipeline = Pipeline(steps=[\n",
+        "    ('preprocessor', preprocessor),\n",
+        "    ('model', Ridge(alpha=1.0))\n",
+        "])\n",
+        "model_pipeline.fit(X_train, y_train)\n",
+        "preds = model_pipeline.predict(X_val)\n",
+        "rmse = np.sqrt(mean_squared_error(y_val, preds))\n",
+        "r2 = r2_score(y_val, preds)\n",
+        "print(f\"Validation RMSE: {rmse:.2f} Lakhs\")\n",
+        "print(f\"R2 Score: {r2:.4f}\")\n"
+    ]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "with open('indian_house_price_model.pkl', 'wb') as f:\n",
+        "    pickle.dump(model_pipeline, f)\n",
+        "print('Model saved to indian_house_price_model.pkl')\n"
+    ]
+})
+
+cells.append({
+    "cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    "source": [
+        "test_preds = model_pipeline.predict(X_test)\n",
+        "submission = pd.DataFrame({'Property_ID': test['Property_ID'], 'Price_Lakhs': test_preds})\n",
+        "submission.to_csv('indian_submission.csv', index=False)\n",
+        "print('Predictions saved to indian_submission.csv')\n"
+    ]
+})
+
+new_markdown_cell = {
+    "cell_type": "markdown",
+    "metadata": {},
+    "source": [
+        "## Interactive Live Prediction (Demo!)\n",
+        "Run this block to manually type in properties and receive a live estimated House Price!"
+    ]
+}
+
+new_code_cell = {
+    "cell_type": "code",
+    "execution_count": None,
+    "metadata": {},
+    "outputs": [],
+    "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import pickle\n",
+        "import warnings\n",
+        "warnings.filterwarnings('ignore')\n",
+        "\n",
+        "with open('indian_house_price_model.pkl', 'rb') as f:\n",
+        "    loaded_model = pickle.load(f)\n",
+        "\n",
+        "reference_columns = ['City', 'Area_SqFt', 'BHK', 'Property_Age_Years', 'Furnishing', 'Parking', 'RERA_Approved']\n",
+        "custom_house = pd.DataFrame(columns=reference_columns)\n",
+        "custom_house.loc[0] = np.nan\n",
+        "\n",
+        "print(\"=========================================\")\n",
+        "print(\"    🏠 ENTER CUSTOM HOUSE FEATURES 🏠    \")\n",
+        "print(\"=========================================\")\n",
+        "try:\n",
+        "    print(\"\\nCity Options: [1] Mumbai, [2] Delhi, [3] Bangalore, [4] Hyderabad, [5] Chennai, [6] Pune, [7] Ahmedabad\")\n",
+        "    c = input(\"Enter City Option (1-7)? [Press Enter for 3:Bangalore]: \").strip()\n",
+        "    city_map = {'1':'Mumbai', '2':'Delhi', '3':'Bangalore', '4':'Hyderabad', '5':'Chennai', '6':'Pune', '7':'Ahmedabad'}\n",
+        "    city = city_map.get(c, 'Bangalore')\n",
+        "\n",
+        "    a = input(\"\\nArea (in SqFt)? [Press Enter for 1200]: \").strip()\n",
+        "    area = int(a) if a else 1200\n",
+        "\n",
+        "    b = input(\"\\nBHK (1-6)? [Press Enter for 3]: \").strip()\n",
+        "    bhk = int(b) if b else 3\n",
+        "    \n",
+        "    print(\"\\nFurnishing Options: [1] Unfurnished, [2] Semi-Furnished, [3] Fully-Furnished\")\n",
+        "    f = input(\"Enter Furnishing (1-3)? [Press Enter for 3:Fully-Furnished]: \").strip()\n",
+        "    furn_map = {'1':'Unfurnished', '2':'Semi-Furnished', '3':'Fully-Furnished'}\n",
+        "    furnishing = furn_map.get(f, 'Fully-Furnished')\n",
+        "    \n",
+        "    age_input = input(\"\\nProperty Age in Years? [Press Enter for 2]: \").strip()\n",
+        "    property_age = int(age_input) if age_input else 2\n",
+        "    \n",
+        "    print(\"\\nParking Options: [1] None, [2] Open, [3] Covered\")\n",
+        "    p = input(\"Enter Parking (1-3)? [Press Enter for 3:Covered]: \").strip()\n",
+        "    park_map = {'1':'None', '2':'Open', '3':'Covered'}\n",
+        "    parking = park_map.get(p, 'Covered')\n",
+        "    \n",
+        "    print(\"\\nRERA Approved Options: [1] Yes, [2] No\")\n",
+        "    r = input(\"Enter RERA (1-2)? [Press Enter for 1:Yes]: \").strip()\n",
+        "    rera_map = {'1':'Yes', '2':'No'}\n",
+        "    rera_approved = rera_map.get(r, 'Yes')\n",
+        "    \n",
+        "    custom_house.at[0, 'City'] = city\n",
+        "    custom_house.at[0, 'Area_SqFt'] = area\n",
+        "    custom_house.at[0, 'BHK'] = bhk\n",
+        "    custom_house.at[0, 'Property_Age_Years'] = property_age\n",
+        "    custom_house.at[0, 'Furnishing'] = furnishing\n",
+        "    custom_house.at[0, 'Parking'] = parking\n",
+        "    custom_house.at[0, 'RERA_Approved'] = rera_approved\n",
+        "    \n",
+        "    pred_lakhs = loaded_model.predict(custom_house)[0]\n",
+        "    \n",
+        "    print(\"\\n\" + \"*\"*45)\n",
+        "    print(f\" 🇮🇳 PREDICTED PRICE: ₹{pred_lakhs:,.2f} Lakhs \")\n",
+        "    if pred_lakhs > 100:\n",
+        "        crores = pred_lakhs / 100.0\n",
+        "        print(f\" 🇮🇳 Or Approximately: ₹{crores:,.2f} Crores \")\n",
+        "    print(\"*\"*45 + \"\\n\")\n",
+        "except Exception as e:\n",
+        "    print(f\"\\n⚠️ An error occurred computing the prediction:\\n{e}\")\n"
+    ]
+}
+
+cells.append(new_markdown_cell)
+cells.append(new_code_cell)
+
+notebook = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python"}
+    },
+    "nbformat": 4,
+    "nbformat_minor": 2
+}
+
+with open('Indian_House_Prices_Prediction.ipynb', 'w', encoding='utf-8') as f:
+    json.dump(notebook, f, indent=1, ensure_ascii=False)
+
+print("Indian notebook successfully generated!")
