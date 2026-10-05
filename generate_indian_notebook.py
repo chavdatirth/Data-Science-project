@@ -4,7 +4,10 @@ cells = []
 
 cells.append({
     "cell_type": "markdown", "metadata": {},
-    "source": ["# Indian Housing Price Prediction\n", "### Specialized Model handling BHK, Area, City, and Furnishing"]
+    "source": [
+        "# Indian Housing Price Prediction\n",
+        "### Specialized Model handling BHK, Area, City, and Furnishing with Interactive GUI"
+    ]
 })
 
 cells.append({
@@ -96,90 +99,160 @@ cells.append({
     ]
 })
 
-new_markdown_cell = {
+cells.append({
     "cell_type": "markdown",
     "metadata": {},
     "source": [
-        "## Interactive Live Prediction (Demo!)\n",
-        "Run this block to manually type in properties and receive a live estimated House Price!"
+        "## 🖥️ Interactive GUI: Indian Real Estate Price Estimator\n",
+        "Use the visual control panel below with dropdown menus and sliders to dynamically estimate property valuations in real-time."
     ]
-}
+})
 
-new_code_cell = {
+gui_code = """import ipywidgets as widgets
+from IPython.display import display, HTML
+import pandas as pd
+import numpy as np
+import pickle
+
+# Load the saved model pipeline
+with open('indian_house_price_model.pkl', 'rb') as f:
+    loaded_model = pickle.load(f)
+
+# Define Interactive UI Components
+city_dd = widgets.Dropdown(
+    options=['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune', 'Ahmedabad'],
+    value='Bangalore',
+    description='🏙️ City:',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+area_slider = widgets.IntSlider(
+    value=1200,
+    min=300,
+    max=10000,
+    step=50,
+    description='📐 Area (SqFt):',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+bhk_dd = widgets.Dropdown(
+    options=[1, 2, 3, 4, 5, 6],
+    value=3,
+    description='🛏️ BHK:',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+furn_dd = widgets.Dropdown(
+    options=['Unfurnished', 'Semi-Furnished', 'Fully-Furnished'],
+    value='Fully-Furnished',
+    description='🛋️ Furnishing:',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+age_slider = widgets.IntSlider(
+    value=2,
+    min=0,
+    max=50,
+    step=1,
+    description='⏳ Age (Years):',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+park_dd = widgets.Dropdown(
+    options=['None', 'Open', 'Covered'],
+    value='Covered',
+    description='🚗 Parking:',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+rera_dd = widgets.Dropdown(
+    options=['Yes', 'No'],
+    value='Yes',
+    description='📜 RERA Approved:',
+    style={'description_width': '130px'},
+    layout=widgets.Layout(width='380px')
+)
+
+predict_btn = widgets.Button(
+    description=' Calculate Estimated Price',
+    button_style='success',
+    icon='calculator',
+    layout=widgets.Layout(width='380px', height='45px', margin='15px 0 0 0')
+)
+
+output_area = widgets.Output()
+
+def on_predict_clicked(b):
+    with output_area:
+        output_area.clear_output()
+        custom_house = pd.DataFrame([{
+            'City': city_dd.value,
+            'Area_SqFt': area_slider.value,
+            'BHK': bhk_dd.value,
+            'Property_Age_Years': age_slider.value,
+            'Furnishing': furn_dd.value,
+            'Parking': park_dd.value,
+            'RERA_Approved': rera_dd.value
+        }])
+        
+        pred_lakhs = loaded_model.predict(custom_house)[0]
+        
+        crores_html = ""
+        if pred_lakhs >= 100:
+            crores_html = f"<div style='font-size: 16px; color: #4a5568; margin-top: 4px;'>Approx: <b>₹{pred_lakhs/100:.2f} Crores</b></div>"
+            
+        card_html = f'''
+        <div style="border: 2px solid #28a745; border-radius: 12px; padding: 18px; margin-top: 15px; background: linear-gradient(135deg, #f0fff4, #e6fffa); width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 13px; font-weight: bold; color: #276749; text-transform: uppercase; letter-spacing: 1px;">🏠 Estimated Market Valuation</div>
+            <div style="font-size: 30px; font-weight: 800; color: #22543d; margin: 8px 0;">₹{pred_lakhs:,.2f} Lakhs</div>
+            {crores_html}
+            <div style="margin-top: 12px; font-size: 12px; color: #4a5568; border-top: 1px solid #cbd5e0; padding-top: 8px;">
+                📍 <b>{city_dd.value}</b> &nbsp;|&nbsp; 📐 <b>{area_slider.value} sq.ft</b> &nbsp;|&nbsp; 🛏️ <b>{bhk_dd.value} BHK</b><br>
+                🛋️ <b>{furn_dd.value}</b> &nbsp;|&nbsp; 🚗 <b>{park_dd.value} Parking</b> &nbsp;|&nbsp; 📜 <b>RERA: {rera_dd.value}</b>
+            </div>
+        </div>
+        '''
+        display(HTML(card_html))
+
+predict_btn.on_click(on_predict_clicked)
+
+# Render GUI Form
+title_html = widgets.HTML('''
+<div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 16px; border-radius: 10px; width: 400px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h3 style="margin: 0; font-family: sans-serif; font-size: 18px;">🏠 Indian Real Estate Valuation GUI</h3>
+    <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;">Adjust parameters below and click calculate</p>
+</div>
+''')
+
+gui_panel = widgets.VBox([
+    title_html,
+    city_dd,
+    area_slider,
+    bhk_dd,
+    furn_dd,
+    age_slider,
+    park_dd,
+    rera_dd,
+    predict_btn,
+    output_area
+], layout=widgets.Layout(padding='15px', border='1px solid #cbd5e1', border_radius='12px', width='440px', background_color='#f8fafc'))
+
+display(gui_panel)
+"""
+
+cells.append({
     "cell_type": "code",
     "execution_count": None,
     "metadata": {},
     "outputs": [],
-    "source": [
-        "import pandas as pd\n",
-        "import numpy as np\n",
-        "import pickle\n",
-        "import warnings\n",
-        "warnings.filterwarnings('ignore')\n",
-        "\n",
-        "with open('indian_house_price_model.pkl', 'rb') as f:\n",
-        "    loaded_model = pickle.load(f)\n",
-        "\n",
-        "reference_columns = ['City', 'Area_SqFt', 'BHK', 'Property_Age_Years', 'Furnishing', 'Parking', 'RERA_Approved']\n",
-        "custom_house = pd.DataFrame(columns=reference_columns)\n",
-        "custom_house.loc[0] = np.nan\n",
-        "\n",
-        "print(\"=========================================\")\n",
-        "print(\"    🏠 ENTER CUSTOM HOUSE FEATURES 🏠    \")\n",
-        "print(\"=========================================\")\n",
-        "try:\n",
-        "    print(\"\\nCity Options: [1] Mumbai, [2] Delhi, [3] Bangalore, [4] Hyderabad, [5] Chennai, [6] Pune, [7] Ahmedabad\")\n",
-        "    c = input(\"Enter City Option (1-7)? [Press Enter for 3:Bangalore]: \").strip()\n",
-        "    city_map = {'1':'Mumbai', '2':'Delhi', '3':'Bangalore', '4':'Hyderabad', '5':'Chennai', '6':'Pune', '7':'Ahmedabad'}\n",
-        "    city = city_map.get(c, 'Bangalore')\n",
-        "\n",
-        "    a = input(\"\\nArea (in SqFt)? [Press Enter for 1200]: \").strip()\n",
-        "    area = int(a) if a else 1200\n",
-        "\n",
-        "    b = input(\"\\nBHK (1-6)? [Press Enter for 3]: \").strip()\n",
-        "    bhk = int(b) if b else 3\n",
-        "    \n",
-        "    print(\"\\nFurnishing Options: [1] Unfurnished, [2] Semi-Furnished, [3] Fully-Furnished\")\n",
-        "    f = input(\"Enter Furnishing (1-3)? [Press Enter for 3:Fully-Furnished]: \").strip()\n",
-        "    furn_map = {'1':'Unfurnished', '2':'Semi-Furnished', '3':'Fully-Furnished'}\n",
-        "    furnishing = furn_map.get(f, 'Fully-Furnished')\n",
-        "    \n",
-        "    age_input = input(\"\\nProperty Age in Years? [Press Enter for 2]: \").strip()\n",
-        "    property_age = int(age_input) if age_input else 2\n",
-        "    \n",
-        "    print(\"\\nParking Options: [1] None, [2] Open, [3] Covered\")\n",
-        "    p = input(\"Enter Parking (1-3)? [Press Enter for 3:Covered]: \").strip()\n",
-        "    park_map = {'1':'None', '2':'Open', '3':'Covered'}\n",
-        "    parking = park_map.get(p, 'Covered')\n",
-        "    \n",
-        "    print(\"\\nRERA Approved Options: [1] Yes, [2] No\")\n",
-        "    r = input(\"Enter RERA (1-2)? [Press Enter for 1:Yes]: \").strip()\n",
-        "    rera_map = {'1':'Yes', '2':'No'}\n",
-        "    rera_approved = rera_map.get(r, 'Yes')\n",
-        "    \n",
-        "    custom_house.at[0, 'City'] = city\n",
-        "    custom_house.at[0, 'Area_SqFt'] = area\n",
-        "    custom_house.at[0, 'BHK'] = bhk\n",
-        "    custom_house.at[0, 'Property_Age_Years'] = property_age\n",
-        "    custom_house.at[0, 'Furnishing'] = furnishing\n",
-        "    custom_house.at[0, 'Parking'] = parking\n",
-        "    custom_house.at[0, 'RERA_Approved'] = rera_approved\n",
-        "    \n",
-        "    pred_lakhs = loaded_model.predict(custom_house)[0]\n",
-        "    \n",
-        "    print(\"\\n\" + \"*\"*45)\n",
-        "    print(f\" 🇮🇳 PREDICTED PRICE: ₹{pred_lakhs:,.2f} Lakhs \")\n",
-        "    if pred_lakhs > 100:\n",
-        "        crores = pred_lakhs / 100.0\n",
-        "        print(f\" 🇮🇳 Or Approximately: ₹{crores:,.2f} Crores \")\n",
-        "    print(\"*\"*45 + \"\\n\")\n",
-        "except Exception as e:\n",
-        "    print(f\"\\n⚠️ An error occurred computing the prediction:\\n{e}\")\n"
-    ]
-}
-
-cells.append(new_markdown_cell)
-cells.append(new_code_cell)
+    "source": [line + "\n" for line in gui_code.splitlines()]
+})
 
 notebook = {
     "cells": cells,
@@ -194,4 +267,4 @@ notebook = {
 with open('Indian_House_Prices_Prediction.ipynb', 'w', encoding='utf-8') as f:
     json.dump(notebook, f, indent=1, ensure_ascii=False)
 
-print("Indian notebook successfully generated!")
+print("Indian notebook successfully updated with GUI!")
