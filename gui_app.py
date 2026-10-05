@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import os
+import warnings
+warnings.filterwarnings('ignore')
 
 def load_model():
     model_path = os.path.join(os.path.dirname(__file__), 'indian_house_price_model.pkl')
